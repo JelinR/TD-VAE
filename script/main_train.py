@@ -12,14 +12,27 @@ from prep_data import *
 import sys
 
 #### preparing dataset
-with open("./data/MNIST.pkl", 'rb') as file_handle:
-    MNIST = pickle.load(file_handle)
+# with open("./data/MNIST.pkl", 'rb') as file_handle:
+#     MNIST = pickle.load(file_handle)
 
-data = MNIST_Dataset(MNIST['train_image'])
+# data = MNIST_Dataset(MNIST['train_image'])
+
+ROOT_DIR = "/mnt/TD-VAE"
+
+#Load MNIST data (train + test)
+from torchvision.datasets import MNIST
+import numpy as np
+
+# Load train and test datasets
+train_dataset = MNIST(root=f"{ROOT_DIR}/data", train=True, download=True)
+train_images = np.stack([np.array(img, dtype=np.uint8) for img, _ in train_dataset])  # (60000, 28, 28)
+data = MNIST_Dataset(train_images)
+
+
 batch_size = 512
 data_loader = DataLoader(data,
-                         batch_size = batch_size,
-                         shuffle = True)
+                        batch_size = batch_size,
+                        shuffle = True)
 
 #### build a TD-VAE model
 input_size = 784
@@ -32,7 +45,7 @@ tdvae = tdvae.cuda()
 #### training
 optimizer = optim.Adam(tdvae.parameters(), lr = 0.0005)
 num_epoch = 4000
-log_file_handle = open("./log/loginfo_new.txt", 'w')
+log_file_handle = open(f"{ROOT_DIR}/log/loginfo_new.txt", 'w')
 for epoch in range(num_epoch):
     for idx, images in enumerate(data_loader):        
         images = images.cuda()       
@@ -45,14 +58,14 @@ for epoch in range(num_epoch):
         optimizer.step()
 
         print("epoch: {:>4d}, idx: {:>4d}, loss: {:.2f}".format(epoch, idx, loss.item()),
-              file = log_file_handle, flush = True)
+            file = log_file_handle, flush = True)
         
         print("epoch: {:>4d}, idx: {:>4d}, loss: {:.2f}".format(epoch, idx, loss.item()))
 
-    if (epoch + 1) % 50 == 0:
-        torch.save({
-            'epoch': epoch,
-            'model_state_dict': tdvae.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'loss': loss
-        }, "./output/model/new_model_epoch_{}.pt".format(epoch))
+    # if (epoch + 1) % 50 == 0:
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': tdvae.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': loss
+    }, f"{ROOT_DIR}/output/model/new_model_epoch_{epoch}.pt")

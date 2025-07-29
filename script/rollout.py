@@ -13,9 +13,12 @@ from prep_data import *
 """ After training the model, we can try to use the model to do
 jumpy predictions.
 """
+ROOT_DIR = "/mnt/TD-VAE"
+EPOCH_NUM = 350
 
 #### load trained model
-checkpoint = torch.load("./output/model/model_epoch_3799.pt")
+
+checkpoint = torch.load(f"{ROOT_DIR}/output/model/new_model_epoch_{EPOCH_NUM}.pt")
 input_size = 784
 processed_x_size = 784
 belief_state_size = 50
@@ -27,12 +30,28 @@ tdvae.load_state_dict(checkpoint['model_state_dict'])
 optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 #### load dataset 
-with open("./data/MNIST.pkl", 'rb') as file_handle:
-    MNIST = pickle.load(file_handle)
+# with open("./data/MNIST.pkl", 'rb') as file_handle:
+#     MNIST = pickle.load(file_handle)
+
+# data = MNIST_Dataset(MNIST['train_image'], binary = False)
+
+
+
+#Load MNIST data (train + test)
+from torchvision.datasets import MNIST
+import numpy as np
+
+# Load train and test datasets
+train_dataset = MNIST(root=f"{ROOT_DIR}/data", train=True, download=True)
+train_images = np.stack([np.array(img, dtype=np.uint8) for img, _ in train_dataset])  # (60000, 28, 28)
+data = MNIST_Dataset(train_images, binary=False)
+
+
+
 tdvae.eval()
 tdvae = tdvae.cuda()
 
-data = MNIST_Dataset(MNIST['train_image'], binary = False)
+
 batch_size = 6
 data_loader = DataLoader(data,
                          batch_size = batch_size,
@@ -69,6 +88,7 @@ for i in range(batch_size):
                     cmap = 'binary')
         axes.axis('off')
 
-fig.savefig("./output/rollout_result.eps")
+fig.savefig(f"{ROOT_DIR}/output/rollout_result_{EPOCH_NUM}.eps")
+fig.savefig(f"{ROOT_DIR}/output/rollout_result_{EPOCH_NUM}.png")
 plt.show()
 sys.exit()
