@@ -196,9 +196,13 @@ class TD_VAE(nn.Module):
         loss = 0.5*torch.sum(((t1_l2_pb_z_mu - t1_l2_qs_z)/torch.exp(t1_l2_pb_z_logsigma))**2,-1) + \
                torch.sum(t1_l2_pb_z_logsigma, -1) - torch.sum(t1_l2_qs_z_logsigma, -1)
 
+        kl_loss = torch.mean(loss)
+
         ## KL divergence between t1_l1_pb_z and t1_l1_qs_z
         loss += 0.5*torch.sum(((t1_l1_pb_z_mu - t1_l1_qs_z)/torch.exp(t1_l1_pb_z_logsigma))**2,-1) + \
                torch.sum(t1_l1_pb_z_logsigma, -1) - torch.sum(t1_l1_qs_z_logsigma, -1)
+
+        # kl_loss = torch.mean(loss)#.copy()   #TODO ADDED
         
         #### The following four terms estimate the KL divergence between the z distribution at time t2
         #### based on variational distribution (inference model) and z distribution at time t2 based on transition.
@@ -218,8 +222,9 @@ class TD_VAE(nn.Module):
         ## observation prob at time t2
         loss += -torch.sum(self.x[:,t2,:]*torch.log(t2_x_prob) + (1-self.x[:,t2,:])*torch.log(1-t2_x_prob), -1)
         loss = torch.mean(loss)
-        
-        return loss
+
+        #return loss
+        return loss, kl_loss    #TODO CHANGED
 
     def rollout(self, images, t1, t2):
         self.forward(images)

@@ -10,6 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 from model import *
 from prep_data import *
 import sys
+import os
 
 #### preparing dataset
 # with open("./data/MNIST.pkl", 'rb') as file_handle:
@@ -25,7 +26,7 @@ import numpy as np
 
 # Load train and test datasets
 train_dataset = MNIST(root=f"{ROOT_DIR}/data", train=True, download=True)
-train_images = np.stack([np.array(img, dtype=np.uint8) for img, _ in train_dataset])  # (60000, 28, 28)
+train_images = np.stack([np.array(img, dtype=np.uint8) for img, _ in train_dataset])[:1000] #TODO CHANGED TO 1000  # (60000, 28, 28)
 data = MNIST_Dataset(train_images)
 
 
@@ -46,13 +47,15 @@ tdvae = tdvae.cuda()
 optimizer = optim.Adam(tdvae.parameters(), lr = 0.0005)
 num_epoch = 4000
 log_file_handle = open(f"{ROOT_DIR}/log/loginfo_new.txt", 'w')
+save_dir = f"{ROOT_DIR}/output/model_with_kl"
+os.makedirs(save_dir, exist_ok=True)
 for epoch in range(num_epoch):
     for idx, images in enumerate(data_loader):        
         images = images.cuda()       
         tdvae.forward(images)
         t_1 = np.random.choice(16)
         t_2 = t_1 + np.random.choice([1,2,3,4])
-        loss = tdvae.calculate_loss(t_1, t_2)
+        loss, kl_loss = tdvae.calculate_loss(t_1, t_2)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -60,12 +63,15 @@ for epoch in range(num_epoch):
         print("epoch: {:>4d}, idx: {:>4d}, loss: {:.2f}".format(epoch, idx, loss.item()),
             file = log_file_handle, flush = True)
         
-        print("epoch: {:>4d}, idx: {:>4d}, loss: {:.2f}".format(epoch, idx, loss.item()))
+        # print(kl_loss, type(kl_loss))
+        # print(kl_loss.item())
+        print("epoch: {:>4d}, idx: {:>4d}, loss: {:.2f}, kl_loss: {:.2f}".format(epoch, idx, loss.item(), kl_loss.item()))
 
     # if (epoch + 1) % 50 == 0:
     torch.save({
         'epoch': epoch,
-        'model_state_dict': tdvae.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-        'loss': loss
-    }, f"{ROOT_DIR}/output/model/new_model_epoch_{epoch}.pt")
+        # 'model_state_dict': tdvae.state_dict(),
+        # 'optimizer_state_dict': optimizer.state_dict(),
+        'loss': loss,
+        'kl_loss': kl_loss
+    }, f"{save_dir}/new_model_epoch_{epoch}.pt")

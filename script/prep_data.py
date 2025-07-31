@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 class MNIST_Dataset(Dataset):
     def __init__(self, image, binary = True):
         super(MNIST_Dataset).__init__()
-        self.image = image
+        self.image = image       #Shape: (60000, 28, 28)
         self.binary = binary
     def __len__(self):
         return self.image.shape[0]
