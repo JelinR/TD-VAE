@@ -199,7 +199,7 @@ def log_normal_pdf(x, mean, logvar, eps=1e-6):
         dim=-1
     )
 
-def kl_divergence_old(mu_q, logvar_q, mu_p, logvar_p):
+def kl_divergence(mu_q, logvar_q, mu_p, logvar_p):
     var_q = torch.exp(logvar_q) #getting back the variance from the log of variance
     var_p = torch.exp(logvar_p)
     return 0.5 * torch.sum(  #kl divergence of twogaussian distributions
@@ -208,7 +208,7 @@ def kl_divergence_old(mu_q, logvar_q, mu_p, logvar_p):
         dim=-1
     )
 
-def kl_divergence(mu_q, logvar_q, mu_p, logvar_p):
+def kl_divergence_git(mu_q, logvar_q, mu_p, logvar_p):
     var_q = torch.exp(logvar_q) #getting back the variance from the log of variance
     var_p = torch.exp(logvar_p)
     return 0.5 * torch.sum(((mu_p - mu_q)/(var_p))**2, -1) + torch.sum(logvar_p, -1) - torch.sum(logvar_q, -1)
@@ -605,7 +605,7 @@ for batch in train_loader:
     break
 
 #Run rollout
-for batch_idx in np.arange(5):
+for batch_idx in np.arange(10):
     print(f"Rollout for Batch {batch_idx}")
 
     # x_batch = X_train[batch_idx].to(device)

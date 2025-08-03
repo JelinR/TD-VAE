@@ -13,6 +13,7 @@ def get_args():
     parser.add_argument("--num_epochs", type=int, default=6000)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--learn_rate", type=float, default=5e-4)
+    parser.add_argument("--beta_type", type=str, default="default", help="Values possible : ['default', 'linear', 'cyclic', 'weighteds']")
 
     #TD-VAE Parameters
     parser.add_argument("--latent_dim", type=int, default=8)

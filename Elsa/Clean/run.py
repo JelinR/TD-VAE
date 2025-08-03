@@ -27,6 +27,8 @@ args = get_args()
 num_epochs = args.num_epochs
 batch_size = args.batch_size
 learn_rate = args.learn_rate
+beta_type = args.beta_type
+print(f"Beta Type: {beta_type}")
 
 latent_dim = args.latent_dim
 belief_dim = args.belief_dim
@@ -490,14 +492,14 @@ class TDVAE_hierachical(nn.Module):
 
 
 #Beta Scheduling
-def linear_beta_schedule(epoch, max_epochs, max_beta=1.0, min_beta=0.0):
+def linear_beta_schedule(epoch, max_epochs, max_beta=10.0, min_beta=1.0):
     return min_beta + (max_beta - min_beta) * (epoch / max_epochs)
 
-def cyclic_beta_schedule(step, warmup_steps, beta_max = 1.0):
+def cyclic_beta_schedule(step, warmup_steps, beta_max = 10.0):
     factor = step // warmup_steps + 1
     if factor % 2 == 1: # odd means ramping up
        current_max = warmup_steps * factor
-       normalized_step = 1 - (current_max - step) / warmup_steps
+       normalized_step = 10 * (1 - (current_max - step) / warmup_steps)
        beta = beta_max * normalized_step
     else:
         beta = beta_max
@@ -571,9 +573,11 @@ for epoch in range(start_epoch, num_epochs):
 
     for batch in tqdm(train_loader):
         x = batch.to(device)
-        #beta = linear_beta_schedule(epoch, num_epochs)
-        #beta = cyclic_beta_schedule(epoch, warmup_steps = 20)
-        metrics = vae.train_step(x, optimizer, device, beta=1, loss_type=loss_type)
+        if beta_type == "linear": beta = linear_beta_schedule(epoch, num_epochs)
+        elif beta_type == "cyclic": beta = cyclic_beta_schedule(epoch, warmup_steps = 50)
+        elif beta_type == "weighted": beta = 10
+        else: beta = 1
+        metrics = vae.train_step(x, optimizer, device, beta=beta, loss_type=loss_type)
 
         total_loss += metrics['loss']
         total_rec += metrics['reconstruction_loss']
